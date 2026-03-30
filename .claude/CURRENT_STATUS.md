@@ -1,32 +1,39 @@
 # CURRENT_STATUS.md（自動更新）
 ## プロジェクト: jan-data（麻雀フリー専用成績管理アプリ）
-## 最終更新: 2026-03-29
+## 最終更新: 2026-03-31
 
 ## 直近のセッション文脈
-### 最終セッション (2026-03-29)
-- **議題**: バナー広告統合 + iOSリリース準備
+### 最終セッション (2026-03-31)
+- **議題**: iOSリリース完了（AdMob本番ID → EAS Build → App Store提出）
 - **実施内容**:
-  - AdMob バナー広告統合:
-    - `react-native-google-mobile-ads` + `expo-dev-client` インストール
-    - `app.json`: `ios.bundleIdentifier: "com.jandata.app"` + AdMobプラグイン設定
-    - `eas.json` 新規作成（development / preview / production 3プロファイル）
-    - `src/constants/ads.ts` 新規作成（`__DEV__` でテスト/本番ID自動切替）
-    - `src/components/ads/BannerAdView.native.tsx` 新規作成（ネイティブ用バナー広告）
-    - `src/components/ads/BannerAdView.tsx` 新規作成（Web用ダミー、nullを返す）
-    - プラットフォーム別ファイル分割でWebビルド互換性を確保
-    - ホーム画面 ScrollView 末尾に `<BannerAdView />` 配置
-  - 前回: コンペモード + 収支推移チャート軸ラベル + 対局詳細/編集簡素化
+  - AdMob本番ID設定（ads.ts + app.json）
+  - EASプロジェクト初期化（eas init → @pershey/jan-data）
+  - Git初期化 + GitHub リポジトリ作成（pershey/jan-data、public）
+  - iOS開発ビルド成功（シミュレータ向け）
+  - iOS本番ビルド成功（App Store向け、v1.0.0 build 3）
+  - App Store提出完了（eas submit）
+  - eas.json にApple提出情報設定（appleId, ascAppId, appleTeamId）
+  - app.json に ITSAppUsesNonExemptEncryption: false 追加
+  - プライバシーポリシーページ作成（GitHub Pages公開）
+  - サポートページ作成（GitHub Pages公開）
+  - App Store Connect 情報入力（説明文、キーワード、著作権、スクリーンショット等）
+  - ローカルビルド（npx expo run:ios）でシミュレータ動作確認
+  - iPad Pro 13-inch シミュレータにもインストール
 - **主要な結論・決定事項**:
-  - iOS先行リリース → Android後追加
-  - 広告配置はホーム画面下部のみ（バナータイプ）
-  - bundleIdentifier: `com.jandata.app`
-  - テスト広告IDで開発、本番時に `ads.ts` と `app.json` のIDを差し替え
+  - AdMob iOS App ID: ca-app-pub-7844017135115297~8203010029
+  - バナー広告ユニットID: ca-app-pub-7844017135115297/3390403135
+  - Apple ID: pershey_1228@icloud.com
+  - ASC App ID: 6761330642
+  - Apple Team ID: NRJLLKV544
+  - bundleIdentifier: com.jandata.app
+  - GitHub: https://github.com/pershey/jan-data
+  - プライバシーポリシー: https://pershey.github.io/jan-data/privacy-policy.html
+  - サポートURL: https://pershey.github.io/jan-data/support.html
 - **未解決・次回持ち越し事項**:
-  - `eas init` 実行（EASプロジェクト初期化）
-  - AdMob本番ID取得・設定（`ads.ts` の `PROD_BANNER_ID_IOS` + `app.json` の `iosAppId`）
-  - `eas.json` の submit セクション（appleId, ascAppId, appleTeamId）を実値に設定
-  - EAS Build 実行（`eas build --profile development --platform ios`）
+  - Apple審査結果待ち
+  - アプリアイコン（Geminiで生成 → assets/icon.png 差し替え → 再ビルド提出）
   - ATT（App Tracking Transparency）は今回スコープ外、必要時に別途対応
+  - Android版リリース（後日対応予定）
 
 ## 完了済み機能
 1. ✅ 基盤構築（Expo SDK 55, expo-sqlite, Expo Router）
@@ -51,3 +58,6 @@
 20. ✅ 相性ベスト3（統計タブ内、5戦以上フィルタ、メダル表示）
 21. ✅ AdMob バナー広告統合（ホーム画面下部、プラットフォーム別ファイル分割）
 22. ✅ iOSリリース準備（bundleIdentifier、eas.json、EAS Build設定）
+23. ✅ EASプロジェクト初期化 + 本番ビルド + App Store提出
+24. ✅ プライバシーポリシー + サポートページ（GitHub Pages）
+25. ✅ App Store Connect情報入力（説明文・キーワード・著作権・スクリーンショット）
