@@ -16,7 +16,8 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.jandata.app",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSUserTrackingUsageDescription": "パーソナライズされた広告を表示するために使用します。"
       }
     },
     "android": {
@@ -40,7 +41,8 @@
         {
           "iosAppId": "ca-app-pub-7844017135115297~8203010029"
         }
-      ]
+      ],
+      "expo-tracking-transparency"
     ],
     "extra": {
       "router": {},

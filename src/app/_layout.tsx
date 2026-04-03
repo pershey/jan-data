@@ -3,13 +3,19 @@ import { Stack } from 'expo-router';
 import { SQLiteProvider } from 'expo-sqlite';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
+import { initializeAds } from '@/utils/ad-init';
 import { Colors } from '@/constants/colors';
 
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   useEffect(() => {
-    SplashScreen.hideAsync();
+    const init = async () => {
+      // ATTダイアログ表示 + AdMob SDK初期化（ネイティブのみ）
+      await initializeAds();
+      await SplashScreen.hideAsync();
+    };
+    init();
   }, []);
 
   return (
