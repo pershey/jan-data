@@ -146,6 +146,14 @@ export default function SessionDetailScreen() {
                 {session.chipPrice > 0 ? `¥${session.chipPrice}/枚` : 'なし'}
               </Text>
             </View>
+            {session.tobisho > 0 && (
+              <View style={styles.settingItem}>
+                <Text style={styles.settingLabel}>トビ賞</Text>
+                <Text style={styles.settingValue}>
+                  ¥{session.tobisho.toLocaleString()}
+                </Text>
+              </View>
+            )}
           </View>
         </View>
 

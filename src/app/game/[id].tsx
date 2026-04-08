@@ -184,6 +184,15 @@ export default function GameDetailScreen() {
                   {game.topPrize > 0 ? `¥${game.topPrize.toLocaleString()}` : 'なし'}
                 </Text>
               </View>
+              {game.tobisho > 0 && (
+                <View style={styles.detailItem}>
+                  <Text style={styles.detailLabel}>トビ賞</Text>
+                  <Text style={styles.detailValue}>
+                    ¥{game.tobisho.toLocaleString()}
+                    {game.tobishoReceived > 0 ? `（獲得${game.tobishoReceived}回）` : ''}
+                  </Text>
+                </View>
+              )}
             </View>
           </>
         )}
@@ -208,7 +217,12 @@ export default function GameDetailScreen() {
               </View>
               {r.riichi && <Text style={styles.tag}>リーチ</Text>}
               {r.hasCall && (
-                <Text style={styles.tag}>鳴き{r.callCount}回</Text>
+                <Text style={styles.tag}>鳴き</Text>
+              )}
+              {(r.hasAka || r.hasIppatsu || r.hasUra) && (
+                <Text style={styles.tag}>
+                  {[r.hasAka && '赤', r.hasIppatsu && '一発', r.hasUra && '裏'].filter(Boolean).join('/')}
+                </Text>
               )}
               {r.chipDelta !== 0 && (
                 <Text

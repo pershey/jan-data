@@ -11,6 +11,9 @@ interface RoundRow {
   has_call: number;
   call_count: number;
   chip_delta: number;
+  has_aka: number;
+  has_ippatsu: number;
+  has_ura: number;
   note: string | null;
   created_at: string;
 }
@@ -25,6 +28,9 @@ function mapRow(row: RoundRow): Round {
     hasCall: row.has_call === 1,
     callCount: row.call_count,
     chipDelta: row.chip_delta,
+    hasAka: (row.has_aka ?? 0) === 1,
+    hasIppatsu: (row.has_ippatsu ?? 0) === 1,
+    hasUra: (row.has_ura ?? 0) === 1,
     note: row.note,
     createdAt: row.created_at,
   };
@@ -60,13 +66,16 @@ export function useRoundRepository() {
       hasCall: boolean;
       callCount: number;
       chipDelta: number;
+      hasAka?: boolean;
+      hasIppatsu?: boolean;
+      hasUra?: boolean;
     }[]
   ): Promise<void> {
     const now = new Date().toISOString();
     for (const r of roundsData) {
       await db.runAsync(
-        `INSERT INTO rounds (game_id, round_number, result, riichi, has_call, call_count, chip_delta, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO rounds (game_id, round_number, result, riichi, has_call, call_count, chip_delta, has_aka, has_ippatsu, has_ura, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           gameId,
           r.roundNumber,
@@ -75,6 +84,9 @@ export function useRoundRepository() {
           r.hasCall ? 1 : 0,
           r.callCount,
           r.chipDelta,
+          r.hasAka ? 1 : 0,
+          r.hasIppatsu ? 1 : 0,
+          r.hasUra ? 1 : 0,
           now,
         ]
       );
@@ -91,6 +103,9 @@ export function useRoundRepository() {
       hasCall: boolean;
       callCount: number;
       chipDelta: number;
+      hasAka?: boolean;
+      hasIppatsu?: boolean;
+      hasUra?: boolean;
     }[]
   ): Promise<void> {
     await db.runAsync('DELETE FROM rounds WHERE game_id = ?', [gameId]);

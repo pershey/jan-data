@@ -1,39 +1,33 @@
 # CURRENT_STATUS.md（自動更新）
 ## プロジェクト: jan-data（麻雀フリー専用成績管理アプリ）
-## 最終更新: 2026-03-31
+## 最終更新: 2026-04-04
 
 ## 直近のセッション文脈
-### 最終セッション (2026-03-31)
-- **議題**: iOSリリース完了（AdMob本番ID → EAS Build → App Store提出）
+### 最終セッション (2026-04-04)
+- **議題**: 実使用フィードバックに基づく6つの改善要望を一括実装
 - **実施内容**:
-  - AdMob本番ID設定（ads.ts + app.json）
-  - EASプロジェクト初期化（eas init → @pershey/jan-data）
-  - Git初期化 + GitHub リポジトリ作成（pershey/jan-data、public）
-  - iOS開発ビルド成功（シミュレータ向け）
-  - iOS本番ビルド成功（App Store向け、v1.0.0 build 3）
-  - App Store提出完了（eas submit）
-  - eas.json にApple提出情報設定（appleId, ascAppId, appleTeamId）
-  - app.json に ITSAppUsesNonExemptEncryption: false 追加
-  - プライバシーポリシーページ作成（GitHub Pages公開）
-  - サポートページ作成（GitHub Pages公開）
-  - App Store Connect 情報入力（説明文、キーワード、著作権、スクリーンショット等）
-  - ローカルビルド（npx expo run:ios）でシミュレータ動作確認
-  - iPad Pro 13-inch シミュレータにもインストール
+  - 素点入力の箱下（マイナス）対応（isNegativeScore toggle + rawScore符号反転）
+  - キーボード完了ボタン追加（iOS InputAccessoryView + 全TextInputに適用）
+  - トビ賞機能実装（セッション設定/対局入力/収支計算/詳細表示）
+  - 副露入力簡素化（回数入力削除、有無のみのSwitch）
+  - ご祝儀記録追加（赤ドラ/一発/裏ドラ、和了時のみ表示）
+  - 統計表示カスタマイズ（AsyncStorage永続化、⚙アイコンから項目ON/OFF）
+  - ご祝儀ゲット率・赤ドラ率・一発率・裏ドラ率の統計計算追加
+  - DBマイグレーション追加（sessions.tobisho, games.tobisho/tobisho_received, rounds.has_aka/has_ippatsu/has_ura）
 - **主要な結論・決定事項**:
-  - AdMob iOS App ID: ca-app-pub-7844017135115297~8203010029
-  - バナー広告ユニットID: ca-app-pub-7844017135115297/3390403135
-  - Apple ID: pershey_1228@icloud.com
-  - ASC App ID: 6761330642
-  - Apple Team ID: NRJLLKV544
-  - bundleIdentifier: com.jandata.app
-  - GitHub: https://github.com/pershey/jan-data
-  - プライバシーポリシー: https://pershey.github.io/jan-data/privacy-policy.html
-  - サポートURL: https://pershey.github.io/jan-data/support.html
+  - 箱下対応: number-padキーボード維持 + Switch切り替え方式を採用
+  - トビ賞ロジック: 素点<0で自動支払い + 獲得数は手動入力（±ボタン）
+  - 副露: callCount入力廃止、DB上は残すが常に0or1
+  - ご祝儀: 和了局のみ入力可能、統計はデフォルトOFF（ユーザーがONに切替）
+  - 統計カスタマイズ: AsyncStorageで設定永続化
 - **未解決・次回持ち越し事項**:
-  - Apple審査結果待ち
-  - アプリアイコン（Geminiで生成 → assets/icon.png 差し替え → 再ビルド提出）
-  - ATT（App Tracking Transparency）は今回スコープ外、必要時に別途対応
+  - 再ビルド + App Store提出（v1.0.2）
+  - Apple審査結果待ち（v1.0.1）
   - Android版リリース（後日対応予定）
+
+### 前回セッション (2026-03-31)
+- **議題**: iOSリリース完了（AdMob本番ID → EAS Build → App Store提出）
+- **実施内容**: AdMob設定、EAS初期化、GitHub Pages、ATT対応、app-ads.txt
 
 ## 完了済み機能
 1. ✅ 基盤構築（Expo SDK 55, expo-sqlite, Expo Router）
@@ -61,3 +55,9 @@
 23. ✅ EASプロジェクト初期化 + 本番ビルド + App Store提出
 24. ✅ プライバシーポリシー + サポートページ（GitHub Pages）
 25. ✅ App Store Connect情報入力（説明文・キーワード・著作権・スクリーンショット）
+26. ✅ 素点マイナス（箱下）対応（Switch切り替え方式）
+27. ✅ キーボード完了ボタン（iOS InputAccessoryView）
+28. ✅ トビ賞機能（セッション設定+対局入力+収支計算）
+29. ✅ 副露入力簡素化（回数削除、有無のみ）
+30. ✅ ご祝儀記録（赤ドラ/一発/裏ドラ）+ 統計表示
+31. ✅ 統計表示カスタマイズ（AsyncStorage永続化、項目ON/OFF）

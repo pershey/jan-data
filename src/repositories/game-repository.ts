@@ -15,6 +15,8 @@ interface GameRow {
   uma_small: number;
   oka: number;
   top_prize: number;
+  tobisho: number;
+  tobisho_received: number;
   session_id: number | null;
   note: string | null;
   created_at: string;
@@ -36,6 +38,8 @@ function mapRow(row: GameRow): Game {
     umaSmall: row.uma_small,
     oka: row.oka,
     topPrize: row.top_prize,
+    tobisho: row.tobisho ?? 0,
+    tobishoReceived: row.tobisho_received ?? 0,
     sessionId: row.session_id,
     note: row.note,
     createdAt: row.created_at,
@@ -94,14 +98,17 @@ export function useGameRepository() {
     umaSmall: number;
     oka: number;
     topPrize?: number;
+    tobisho?: number;
+    tobishoReceived?: number;
     sessionId?: number | null;
     note?: string;
   }): Promise<number> {
     const now = new Date().toISOString();
     const result = await db.runAsync(
       `INSERT INTO games (played_at, rate, rank, raw_score, game_fee, income,
-        chip_count, chip_price, uma_big, uma_small, oka, top_prize, session_id, note, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        chip_count, chip_price, uma_big, uma_small, oka, top_prize, tobisho, tobisho_received,
+        session_id, note, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         data.playedAt,
         data.rate,
@@ -115,6 +122,8 @@ export function useGameRepository() {
         data.umaSmall,
         data.oka,
         data.topPrize ?? 0,
+        data.tobisho ?? 0,
+        data.tobishoReceived ?? 0,
         data.sessionId ?? null,
         data.note ?? null,
         now,
@@ -140,6 +149,8 @@ export function useGameRepository() {
       umaSmall: number;
       oka: number;
       topPrize?: number;
+      tobisho?: number;
+      tobishoReceived?: number;
       sessionId?: number | null;
       note?: string;
     }
@@ -149,7 +160,8 @@ export function useGameRepository() {
       `UPDATE games SET
         played_at = ?, rate = ?, rank = ?, raw_score = ?, game_fee = ?, income = ?,
         chip_count = ?, chip_price = ?, uma_big = ?, uma_small = ?, oka = ?,
-        top_prize = ?, session_id = ?, note = ?, updated_at = ?
+        top_prize = ?, tobisho = ?, tobisho_received = ?,
+        session_id = ?, note = ?, updated_at = ?
        WHERE id = ?`,
       [
         data.playedAt,
@@ -164,6 +176,8 @@ export function useGameRepository() {
         data.umaSmall,
         data.oka,
         data.topPrize ?? 0,
+        data.tobisho ?? 0,
+        data.tobishoReceived ?? 0,
         data.sessionId ?? null,
         data.note ?? null,
         now,

@@ -15,6 +15,10 @@ const emptyStats: MahjongStats = {
   totalIncome: 0,
   rankDistribution: [0, 0, 0, 0],
   avgRank: 0,
+  goshugiRate: 0,
+  akaRate: 0,
+  ippatsuRate: 0,
+  uraRate: 0,
 };
 
 export function useStats() {

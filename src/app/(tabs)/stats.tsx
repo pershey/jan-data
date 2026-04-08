@@ -1,15 +1,35 @@
-import { useCallback } from 'react';
-import { ScrollView, StyleSheet, View, Text } from 'react-native';
+import { useCallback, useState } from 'react';
+import { ScrollView, StyleSheet, View, Text, TouchableOpacity, Switch } from 'react-native';
 import { useFocusEffect } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/colors';
 import { useStats } from '@/hooks/useStats';
+import {
+  useStatsSettings,
+  STATS_ITEM_LABELS,
+  type StatsItemKey,
+} from '@/hooks/useStatsSettings';
 import { formatPercent } from '@/utils/format';
 import { RateChart } from '@/components/stats/RateChart';
 import { IncomeChart } from '@/components/stats/IncomeChart';
 import { CompatibilityTop3 } from '@/components/stats/CompatibilityTop3';
 
+// 各指標のカラー定義
+const STATS_COLORS: Record<StatsItemKey, string> = {
+  winRate: '#E53935',
+  dealInRate: '#1E88E5',
+  callRate: '#FF6F00',
+  riichiRate: '#7B1FA2',
+  goshugiRate: '#00897B',
+  akaRate: '#D32F2F',
+  ippatsuRate: '#EF6C00',
+  uraRate: '#6A1B9A',
+};
+
 export default function StatsScreen() {
   const { stats, games, reload } = useStats();
+  const { settings, updateSetting } = useStatsSettings();
+  const [showSettings, setShowSettings] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -27,15 +47,68 @@ export default function StatsScreen() {
     );
   }
 
+  // 表示する指標リスト
+  const visibleItems: { key: StatsItemKey; value: number }[] = [];
+  const allKeys: StatsItemKey[] = [
+    'winRate', 'dealInRate', 'callRate', 'riichiRate',
+    'goshugiRate', 'akaRate', 'ippatsuRate', 'uraRate',
+  ];
+  for (const key of allKeys) {
+    if (settings[key]) {
+      visibleItems.push({ key, value: stats[key] });
+    }
+  }
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* 各種率 */}
+      {/* 成績指標 */}
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>成績指標</Text>
-        <RateChart label="和了率" value={stats.winRate} color="#E53935" />
-        <RateChart label="放銃率" value={stats.dealInRate} color="#1E88E5" />
-        <RateChart label="副露率" value={stats.callRate} color="#FF6F00" />
-        <RateChart label="立直率" value={stats.riichiRate} color="#7B1FA2" />
+        <View style={styles.cardHeader}>
+          <Text style={styles.cardTitle}>成績指標</Text>
+          <TouchableOpacity
+            onPress={() => setShowSettings(!showSettings)}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Ionicons
+              name={showSettings ? 'settings' : 'settings-outline'}
+              size={20}
+              color={showSettings ? Colors.primary : Colors.textLight}
+            />
+          </TouchableOpacity>
+        </View>
+
+        {/* 表示設定パネル */}
+        {showSettings && (
+          <View style={styles.settingsPanel}>
+            <Text style={styles.settingsTitle}>表示項目を選択</Text>
+            {allKeys.map((key) => (
+              <View key={key} style={styles.settingsRow}>
+                <Text style={styles.settingsLabel}>{STATS_ITEM_LABELS[key]}</Text>
+                <Switch
+                  value={settings[key]}
+                  onValueChange={(value) => updateSetting(key, value)}
+                  trackColor={{ true: STATS_COLORS[key] }}
+                />
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* 指標チャート */}
+        {visibleItems.length > 0 ? (
+          visibleItems.map(({ key, value }) => (
+            <RateChart
+              key={key}
+              label={STATS_ITEM_LABELS[key]}
+              value={value}
+              color={STATS_COLORS[key]}
+            />
+          ))
+        ) : (
+          <Text style={styles.noItemsText}>
+            表示する指標がありません。{'\n'}⚙ アイコンから表示項目を選択してください。
+          </Text>
+        )}
       </View>
 
       {/* 順位分布 */}
@@ -85,11 +158,46 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 12,
   },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   cardTitle: {
     fontSize: 16,
     fontWeight: '700',
     color: Colors.text,
     marginBottom: 4,
+  },
+  // 表示設定パネル
+  settingsPanel: {
+    backgroundColor: Colors.background,
+    borderRadius: 8,
+    padding: 12,
+    gap: 8,
+  },
+  settingsTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: Colors.textSecondary,
+    marginBottom: 4,
+  },
+  settingsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  settingsLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: Colors.text,
+  },
+  noItemsText: {
+    fontSize: 13,
+    color: Colors.textLight,
+    textAlign: 'center',
+    lineHeight: 20,
+    paddingVertical: 8,
   },
   avgRank: {
     fontSize: 14,

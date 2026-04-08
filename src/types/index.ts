@@ -11,6 +11,7 @@ export interface Session {
   umaSmall: number;
   oka: number;
   topPrize: number;
+  tobisho: number; // トビ賞（円）、0=なし
   startedAt: string;
   note: string | null;
   createdAt: string;
@@ -32,6 +33,8 @@ export interface Game {
   umaSmall: number;
   oka: number;
   topPrize: number;
+  tobisho: number; // トビ賞設定値（円）
+  tobishoReceived: number; // トビ賞獲得数（相手をトビにした回数）
   sessionId: number | null;
   note: string | null;
   createdAt: string;
@@ -48,6 +51,9 @@ export interface Round {
   hasCall: boolean;
   callCount: number;
   chipDelta: number;
+  hasAka: boolean; // 赤ドラ
+  hasIppatsu: boolean; // 一発
+  hasUra: boolean; // 裏ドラ
   note: string | null;
   createdAt: string;
 }
@@ -64,6 +70,11 @@ export interface MahjongStats {
   totalIncome: number;
   rankDistribution: [number, number, number, number];
   avgRank: number;
+  // ご祝儀関連
+  goshugiRate: number; // ご祝儀ゲット率（赤/一発/裏いずれかを伴う和了の割合）
+  akaRate: number; // 赤ドラ率
+  ippatsuRate: number; // 一発率
+  uraRate: number; // 裏ドラ率
 }
 
 // 対戦相手データ（コンペモード）
@@ -84,4 +95,7 @@ export interface RoundInput {
   hasCall: boolean;
   callCount: number;
   chipDelta: number;
+  hasAka: boolean; // 赤ドラ
+  hasIppatsu: boolean; // 一発
+  hasUra: boolean; // 裏ドラ
 }

@@ -34,6 +34,7 @@ export default function EditSessionScreen() {
   const [umaIndex, setUmaIndex] = useState(0);
   const [okaText, setOkaText] = useState('0');
   const [topPrizeText, setTopPrizeText] = useState('0');
+  const [tobishoText, setTobishoText] = useState('0');
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -49,6 +50,7 @@ export default function EditSessionScreen() {
       setChipPriceText(String(s.chipPrice));
       setOkaText(String(s.oka));
       setTopPrizeText(String(s.topPrize));
+      setTobishoText(String(s.tobisho ?? 0));
 
       // レートプリセット判定
       const matchingPreset = RATE_PRESETS.find(p => p.value === s.rate);
@@ -72,6 +74,7 @@ export default function EditSessionScreen() {
   const chipPrice = parseInt(chipPriceText, 10) || 0;
   const oka = parseInt(okaText, 10) || 0;
   const topPrize = parseInt(topPrizeText, 10) || 0;
+  const tobisho = parseInt(tobishoText, 10) || 0;
   const uma = UMA_PRESETS[umaIndex];
 
   async function save() {
@@ -89,6 +92,7 @@ export default function EditSessionScreen() {
         umaSmall: uma.small,
         oka,
         topPrize,
+        tobisho,
       });
 
       // 配下の全対局の収支を新しいセッション設定で再計算
@@ -105,6 +109,7 @@ export default function EditSessionScreen() {
           umaSmall: uma.small,
           oka,
           topPrize,
+          tobisho,
         });
         await gameRepo.update(game.id, {
           playedAt: game.playedAt,
@@ -119,6 +124,7 @@ export default function EditSessionScreen() {
           umaSmall: uma.small,
           oka,
           topPrize,
+          tobisho,
           sessionId,
         });
       }
@@ -271,6 +277,19 @@ export default function EditSessionScreen() {
           />
           <Text style={styles.hintText}>
             ※ 1位がお店に支払う追加料金
+          </Text>
+
+          <Text style={styles.label}>トビ賞（円）</Text>
+          <TextInput
+            style={styles.input}
+            keyboardType="number-pad"
+            placeholder="例: 1000（0=なし）"
+            placeholderTextColor={Colors.textLight}
+            value={tobishoText}
+            onChangeText={setTobishoText}
+          />
+          <Text style={styles.hintText}>
+            ※ 0点以下にした/された時のボーナス
           </Text>
         </View>
 

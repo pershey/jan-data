@@ -1,6 +1,6 @@
 import { BASE_SCORE } from '@/constants/mahjong';
 
-// 収支を計算（チップ・ウマオカ・トップ賞込み）
+// 収支を計算（チップ・ウマオカ・トップ賞・トビ賞込み）
 export function calculateIncome(params: {
   rawScore: number;
   rate: number;       // 1000点あたりの円
@@ -12,12 +12,16 @@ export function calculateIncome(params: {
   umaSmall: number;   // 千点単位 (例: 10)
   oka: number;        // 配給原点と原点の差 (例: 5000)
   topPrize?: number;  // トップ賞（1位がお店に払う金額、円）
+  tobisho?: number;   // トビ賞設定（円）
+  tobishoReceived?: number; // トビ賞獲得数（相手をトビにした回数）
 }): number {
   const {
     rawScore, rate, rank, gameFee,
     chipCount, chipPrice,
     umaBig, umaSmall, oka,
     topPrize = 0,
+    tobisho = 0,
+    tobishoReceived = 0,
   } = params;
 
   // ポイント差分
@@ -42,6 +46,12 @@ export function calculateIncome(params: {
   // トップ賞（1位のみお店に支払う追加料金）
   const topPrizeCost = rank === 1 ? topPrize : 0;
 
-  // 最終収支 = レート換算 + チップ - 場代 - トップ賞
-  return Math.round(rateIncome + chipIncome - gameFee - topPrizeCost);
+  // トビ賞計算
+  // 自分がトビ（rawScore < 0）→ トビ賞を支払う
+  const tobishoPaid = (tobisho > 0 && rawScore < 0) ? tobisho : 0;
+  // 相手をトビにした → トビ賞を獲得
+  const tobishoGained = tobisho * tobishoReceived;
+
+  // 最終収支 = レート換算 + チップ - 場代 - トップ賞 + トビ賞獲得 - トビ賞支払
+  return Math.round(rateIncome + chipIncome - gameFee - topPrizeCost + tobishoGained - tobishoPaid);
 }

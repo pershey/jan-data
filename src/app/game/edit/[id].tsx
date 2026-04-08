@@ -10,6 +10,8 @@ import {
   Switch,
   KeyboardAvoidingView,
   Platform,
+  InputAccessoryView,
+  Keyboard,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -24,6 +26,8 @@ import { useRoundRepository } from '@/repositories/round-repository';
 import { useSessionRepository } from '@/repositories/session-repository';
 import { ResultSelector } from '@/components/game/ResultSelector';
 import type { Session } from '@/types';
+
+const KEYBOARD_ACCESSORY_ID = 'game-edit-done';
 
 export default function EditGameScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -43,6 +47,7 @@ export default function EditGameScreen() {
   const [customRateText, setCustomRateText] = useState('');
   const [rank, setRank] = useState<number | null>(null);
   const [rawScoreText, setRawScoreText] = useState('');
+  const [isNegativeScore, setIsNegativeScore] = useState(false); // 箱下フラグ
   const [gameFeeText, setGameFeeText] = useState('500');
 
   // チップ設定
@@ -55,6 +60,12 @@ export default function EditGameScreen() {
   // トップ賞
   const [topPrizeText, setTopPrizeText] = useState('0');
 
+  // トビ賞
+  const [tobishoText, setTobishoText] = useState('0');
+
+  // トビ賞獲得数（相手をトビにした回数）
+  const [tobishoReceivedText, setTobishoReceivedText] = useState('0');
+
   // 局データリスト
   const [rounds, setRounds] = useState<RoundInput[]>([]);
 
@@ -66,6 +77,10 @@ export default function EditGameScreen() {
   const [roundHasCall, setRoundHasCall] = useState(false);
   const [roundCallCount, setRoundCallCount] = useState('1');
   const [roundChipDelta, setRoundChipDelta] = useState('0');
+  // ご祝儀フィールド（赤・一発・裏）
+  const [roundHasAka, setRoundHasAka] = useState(false);
+  const [roundHasIppatsu, setRoundHasIppatsu] = useState(false);
+  const [roundHasUra, setRoundHasUra] = useState(false);
 
   // 既存データを読み込む
   useEffect(() => {
@@ -94,11 +109,19 @@ export default function EditGameScreen() {
       setCustomRateText(String(game.rate));
     }
     setRank(game.rank);
-    setRawScoreText(String(game.rawScore));
+    // 箱下対応: rawScoreが負数ならisNegativeScore=true、絶対値をセット
+    if (game.rawScore < 0) {
+      setIsNegativeScore(true);
+      setRawScoreText(String(Math.abs(game.rawScore)));
+    } else {
+      setRawScoreText(String(game.rawScore));
+    }
     setGameFeeText(String(game.gameFee));
     setChipPriceText(String(game.chipPrice));
     setOkaText(String(game.oka));
     setTopPrizeText(String(game.topPrize));
+    setTobishoText(String(game.tobisho ?? 0));
+    setTobishoReceivedText(String(game.tobishoReceived ?? 0));
 
     // ウマのインデックスを検索
     const umaIdx = UMA_PRESETS.findIndex(
@@ -122,18 +145,27 @@ export default function EditGameScreen() {
         hasCall: r.hasCall,
         callCount: r.callCount,
         chipDelta: r.chipDelta,
+        hasAka: r.hasAka,
+        hasIppatsu: r.hasIppatsu,
+        hasUra: r.hasUra,
       }))
     );
 
     setLoading(false);
   }
 
-  const rawScore = parseInt(rawScoreText, 10) || 0;
+  // 素点計算（箱下対応）
+  const parsedScore = parseInt(rawScoreText, 10) || 0;
+  const rawScore = isNegativeScore ? -Math.abs(parsedScore) : parsedScore;
+  const hasRawScore = rawScoreText.trim() !== '';
+
   const gameFee = parseInt(gameFeeText, 10) || 0;
   const chipPrice = parseInt(chipPriceText, 10) || 0;
   const oka = parseInt(okaText, 10) || 0;
   const topPrize = parseInt(topPrizeText, 10) || 0;
   const uma = UMA_PRESETS[umaIndex];
+
+  const tobishoReceived = parseInt(tobishoReceivedText, 10) || 0;
 
   // セッション配下かどうか
   const isSessionGame = gameSessionId !== null && session !== null;
@@ -146,12 +178,13 @@ export default function EditGameScreen() {
   const effectiveUmaSmall = isSessionGame ? session.umaSmall : uma.small;
   const effectiveOka = isSessionGame ? session.oka : oka;
   const effectiveTopPrize = isSessionGame ? session.topPrize : topPrize;
+  const effectiveTobisho = isSessionGame ? session.tobisho : parseInt(tobishoText, 10) || 0;
 
   // チップ合計を局データから算出
   const totalChipDelta = rounds.reduce((sum, r) => sum + r.chipDelta, 0);
 
   const income =
-    rawScore > 0 && rank !== null
+    hasRawScore && rank !== null
       ? calculateIncome({
           rawScore,
           rate: effectiveRate,
@@ -163,9 +196,14 @@ export default function EditGameScreen() {
           umaSmall: effectiveUmaSmall,
           oka: effectiveOka,
           topPrize: effectiveTopPrize,
+          tobisho: effectiveTobisho,
+          tobishoReceived,
         })
       : 0;
   const incomeColor = income >= 0 ? Colors.positive : Colors.negative;
+
+  // 和了結果かどうか判定（ご祝儀フィールド表示判定用）
+  const isWinResult = roundResult === 'ron_win' || roundResult === 'tsumo_win';
 
   // フォームリセット
   function resetRoundForm() {
@@ -174,6 +212,9 @@ export default function EditGameScreen() {
     setRoundHasCall(false);
     setRoundCallCount('1');
     setRoundChipDelta('0');
+    setRoundHasAka(false);
+    setRoundHasIppatsu(false);
+    setRoundHasUra(false);
     setEditingRoundIndex(null);
     setShowRoundForm(false);
   }
@@ -186,6 +227,9 @@ export default function EditGameScreen() {
     setRoundHasCall(r.hasCall);
     setRoundCallCount(String(r.callCount || 1));
     setRoundChipDelta(String(r.chipDelta));
+    setRoundHasAka(r.hasAka);
+    setRoundHasIppatsu(r.hasIppatsu);
+    setRoundHasUra(r.hasUra);
     setEditingRoundIndex(index);
     setShowRoundForm(true);
   }
@@ -201,8 +245,11 @@ export default function EditGameScreen() {
       result: roundResult,
       riichi: roundRiichi,
       hasCall: roundHasCall,
-      callCount: roundHasCall ? parseInt(roundCallCount, 10) || 1 : 0,
+      callCount: roundHasCall ? 1 : 0, // 簡素化: 鳴きありなら1
       chipDelta: parseInt(roundChipDelta, 10) || 0,
+      hasAka: isWinResult ? roundHasAka : false,
+      hasIppatsu: isWinResult ? roundHasIppatsu : false,
+      hasUra: isWinResult ? roundHasUra : false,
     };
 
     if (editingRoundIndex !== null) {
@@ -232,7 +279,7 @@ export default function EditGameScreen() {
       Alert.alert('エラー', '順位を選択してください');
       return;
     }
-    if (rawScore <= 0) {
+    if (!hasRawScore) {
       Alert.alert('エラー', '素点を入力してください');
       return;
     }
@@ -253,6 +300,8 @@ export default function EditGameScreen() {
         umaSmall: effectiveUmaSmall,
         oka: effectiveOka,
         topPrize: effectiveTopPrize,
+        tobisho: effectiveTobisho,
+        tobishoReceived,
         sessionId: gameSessionId,
       });
 
@@ -372,6 +421,7 @@ export default function EditGameScreen() {
                   const v = parseInt(text, 10);
                   if (v > 0) setRate(v);
                 }}
+                inputAccessoryViewID={KEYBOARD_ACCESSORY_ID}
               />
             )}
 
@@ -384,6 +434,7 @@ export default function EditGameScreen() {
               placeholderTextColor={Colors.textLight}
               value={gameFeeText}
               onChangeText={setGameFeeText}
+              inputAccessoryViewID={KEYBOARD_ACCESSORY_ID}
             />
 
             {/* トップ賞 */}
@@ -395,9 +446,25 @@ export default function EditGameScreen() {
               placeholderTextColor={Colors.textLight}
               value={topPrizeText}
               onChangeText={setTopPrizeText}
+              inputAccessoryViewID={KEYBOARD_ACCESSORY_ID}
             />
             <Text style={styles.hintText}>
               ※ 1位がお店に支払う追加料金
+            </Text>
+
+            {/* トビ賞 */}
+            <Text style={styles.label}>トビ賞（円）</Text>
+            <TextInput
+              style={styles.input}
+              keyboardType="number-pad"
+              placeholder="例: 1000（0=なし）"
+              placeholderTextColor={Colors.textLight}
+              value={tobishoText}
+              onChangeText={setTobishoText}
+              inputAccessoryViewID={KEYBOARD_ACCESSORY_ID}
+            />
+            <Text style={styles.hintText}>
+              ※ 0点以下にした/された時のボーナス
             </Text>
           </View>
         )}
@@ -438,6 +505,7 @@ export default function EditGameScreen() {
               placeholderTextColor={Colors.textLight}
               value={okaText}
               onChangeText={setOkaText}
+              inputAccessoryViewID={KEYBOARD_ACCESSORY_ID}
             />
             <Text style={styles.hintText}>
               ※ 配給原点25000 / 原点30000 → 差5000
@@ -457,6 +525,7 @@ export default function EditGameScreen() {
               placeholderTextColor={Colors.textLight}
               value={chipPriceText}
               onChangeText={setChipPriceText}
+              inputAccessoryViewID={KEYBOARD_ACCESSORY_ID}
             />
           </View>
         )}
@@ -515,7 +584,12 @@ export default function EditGameScreen() {
               </View>
               {r.riichi && <Text style={styles.roundTag}>リーチ</Text>}
               {r.hasCall && (
-                <Text style={styles.roundTag}>鳴き{r.callCount}回</Text>
+                <Text style={styles.roundTag}>鳴き</Text>
+              )}
+              {(r.hasAka || r.hasIppatsu || r.hasUra) && (
+                <Text style={styles.roundTag}>
+                  {[r.hasAka && '赤', r.hasIppatsu && '一発', r.hasUra && '裏'].filter(Boolean).join('/')}
+                </Text>
               )}
               {r.chipDelta !== 0 && (
                 <Text
@@ -563,15 +637,34 @@ export default function EditGameScreen() {
                 />
               </View>
 
-              {roundHasCall && (
-                <View style={styles.callCountRow}>
-                  <Text style={styles.label}>鳴き回数</Text>
-                  <TextInput
-                    style={[styles.input, styles.smallInput]}
-                    keyboardType="number-pad"
-                    value={roundCallCount}
-                    onChangeText={setRoundCallCount}
-                  />
+              {/* ご祝儀フィールド（和了時のみ表示） */}
+              {isWinResult && (
+                <View style={styles.goshugiSection}>
+                  <Text style={styles.goshugiTitle}>ご祝儀</Text>
+                  <View style={styles.switchRow}>
+                    <Text style={styles.switchLabel}>赤ドラ</Text>
+                    <Switch
+                      value={roundHasAka}
+                      onValueChange={setRoundHasAka}
+                      trackColor={{ true: '#E53935' }}
+                    />
+                  </View>
+                  <View style={styles.switchRow}>
+                    <Text style={styles.switchLabel}>一発</Text>
+                    <Switch
+                      value={roundHasIppatsu}
+                      onValueChange={setRoundHasIppatsu}
+                      trackColor={{ true: '#FF6F00' }}
+                    />
+                  </View>
+                  <View style={styles.switchRow}>
+                    <Text style={styles.switchLabel}>裏ドラ</Text>
+                    <Switch
+                      value={roundHasUra}
+                      onValueChange={setRoundHasUra}
+                      trackColor={{ true: '#7B1FA2' }}
+                    />
+                  </View>
                 </View>
               )}
 
@@ -593,6 +686,7 @@ export default function EditGameScreen() {
                     keyboardType="number-pad"
                     value={roundChipDelta}
                     onChangeText={setRoundChipDelta}
+                    inputAccessoryViewID={KEYBOARD_ACCESSORY_ID}
                   />
                   <TouchableOpacity
                     style={styles.chipDeltaButton}
@@ -663,11 +757,71 @@ export default function EditGameScreen() {
             placeholderTextColor={Colors.textLight}
             value={rawScoreText}
             onChangeText={setRawScoreText}
+            inputAccessoryViewID={KEYBOARD_ACCESSORY_ID}
           />
+          <View style={styles.switchRow}>
+            <Text style={styles.switchLabel}>箱下（マイナス得点）</Text>
+            <Switch
+              value={isNegativeScore}
+              onValueChange={setIsNegativeScore}
+              trackColor={{ true: Colors.negative }}
+            />
+          </View>
+          {isNegativeScore && hasRawScore && (
+            <Text style={styles.negativeScoreHint}>
+              素点: {rawScore.toLocaleString()}点
+            </Text>
+          )}
         </View>
 
+        {/* === トビ賞獲得（トビ賞設定がある場合のみ表示） === */}
+        {effectiveTobisho > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>トビ賞</Text>
+            <Text style={styles.hintText}>
+              トビ賞: ¥{effectiveTobisho.toLocaleString()} / 回
+            </Text>
+            {isNegativeScore && hasRawScore && (
+              <View style={styles.tobishoAlert}>
+                <Ionicons name="warning" size={16} color={Colors.negative} />
+                <Text style={styles.tobishoAlertText}>
+                  自分がトビ → ¥{effectiveTobisho.toLocaleString()}支払い
+                </Text>
+              </View>
+            )}
+            <Text style={styles.label}>トビ賞獲得数（相手をトビにした回数）</Text>
+            <View style={styles.chipDeltaControls}>
+              <TouchableOpacity
+                style={styles.chipDeltaButton}
+                onPress={() => {
+                  const v = parseInt(tobishoReceivedText, 10) || 0;
+                  if (v > 0) setTobishoReceivedText(String(v - 1));
+                }}
+              >
+                <Text style={styles.chipDeltaButtonText}>−</Text>
+              </TouchableOpacity>
+              <TextInput
+                style={[styles.input, styles.chipDeltaInput]}
+                keyboardType="number-pad"
+                value={tobishoReceivedText}
+                onChangeText={setTobishoReceivedText}
+                inputAccessoryViewID={KEYBOARD_ACCESSORY_ID}
+              />
+              <TouchableOpacity
+                style={styles.chipDeltaButton}
+                onPress={() => {
+                  const v = parseInt(tobishoReceivedText, 10) || 0;
+                  setTobishoReceivedText(String(v + 1));
+                }}
+              >
+                <Text style={styles.chipDeltaButtonText}>＋</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
         {/* === 収支プレビュー === */}
-        {rawScore > 0 && rank !== null && (
+        {hasRawScore && rank !== null && (
           <View style={styles.incomePreview}>
             <Text style={styles.incomeLabel}>収支</Text>
             <Text style={[styles.incomeValue, { color: incomeColor }]}>
@@ -682,6 +836,21 @@ export default function EditGameScreen() {
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
+
+    {/* iOS用キーボード上部ツールバー */}
+    {Platform.OS === 'ios' && (
+      <InputAccessoryView nativeID={KEYBOARD_ACCESSORY_ID}>
+        <View style={styles.keyboardToolbar}>
+          <View style={{ flex: 1 }} />
+          <TouchableOpacity
+            style={styles.keyboardDoneButton}
+            onPress={() => Keyboard.dismiss()}
+          >
+            <Text style={styles.keyboardDoneText}>完了</Text>
+          </TouchableOpacity>
+        </View>
+      </InputAccessoryView>
+    )}
     </>
   );
 }
@@ -786,6 +955,25 @@ const styles = StyleSheet.create({
     width: 60,
     textAlign: 'center',
   },
+  negativeScoreHint: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.negative,
+  },
+  // トビ賞アラート
+  tobishoAlert: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#FFF3E0',
+    borderRadius: 8,
+    padding: 10,
+  },
+  tobishoAlertText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.negative,
+  },
   incomePreview: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -873,10 +1061,17 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: Colors.text,
   },
-  callCountRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
+  // ご祝儀セクション
+  goshugiSection: {
+    gap: 8,
+    backgroundColor: Colors.surface,
+    borderRadius: 8,
+    padding: 10,
+  },
+  goshugiTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: Colors.textSecondary,
   },
   chipDeltaRow: {
     gap: 8,
@@ -954,5 +1149,24 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: Colors.white,
+  },
+  // キーボードツールバー
+  keyboardToolbar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F0F0F0',
+    borderTopWidth: 1,
+    borderTopColor: '#D0D0D0',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  keyboardDoneButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  keyboardDoneText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.primary,
   },
 });

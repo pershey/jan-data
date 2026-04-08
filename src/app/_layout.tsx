@@ -92,6 +92,14 @@ export default function RootLayout() {
         await migrate('games', 'top_prize', 'INTEGER NOT NULL DEFAULT 0');
         await migrate('games', 'session_id', 'INTEGER REFERENCES sessions(id) ON DELETE SET NULL');
         await migrate('rounds', 'chip_delta', 'INTEGER NOT NULL DEFAULT 0');
+        // トビ賞カラム追加
+        await migrate('sessions', 'tobisho', 'INTEGER NOT NULL DEFAULT 0');
+        await migrate('games', 'tobisho', 'INTEGER NOT NULL DEFAULT 0');
+        await migrate('games', 'tobisho_received', 'INTEGER NOT NULL DEFAULT 0');
+        // ご祝儀関連カラム追加（赤・一発・裏）
+        await migrate('rounds', 'has_aka', 'INTEGER NOT NULL DEFAULT 0');
+        await migrate('rounds', 'has_ippatsu', 'INTEGER NOT NULL DEFAULT 0');
+        await migrate('rounds', 'has_ura', 'INTEGER NOT NULL DEFAULT 0');
       }}
     >
       <StatusBar style="dark" />

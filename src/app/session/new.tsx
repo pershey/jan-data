@@ -38,6 +38,7 @@ export default function NewSessionScreen() {
   const [umaIndex, setUmaIndex] = useState(2); // デフォルト: 10-20
   const [okaText, setOkaText] = useState('5000');
   const [topPrizeText, setTopPrizeText] = useState('0');
+  const [tobishoText, setTobishoText] = useState('0');
 
   // 過去のセッションを読み込み、名前ありの雀荘をユニークに抽出
   useEffect(() => {
@@ -59,6 +60,7 @@ export default function NewSessionScreen() {
   const chipPrice = parseInt(chipPriceText, 10) || 0;
   const oka = parseInt(okaText, 10) || 0;
   const topPrize = parseInt(topPrizeText, 10) || 0;
+  const tobisho = parseInt(tobishoText, 10) || 0;
   const uma = UMA_PRESETS[umaIndex];
 
   // テンプレートから設定を反映
@@ -78,6 +80,7 @@ export default function NewSessionScreen() {
     setChipPriceText(String(session.chipPrice));
     setOkaText(String(session.oka));
     setTopPrizeText(String(session.topPrize));
+    setTobishoText(String(session.tobisho ?? 0));
     const matchUma = UMA_PRESETS.findIndex(
       (p) => p.big === session.umaBig && p.small === session.umaSmall
     );
@@ -97,6 +100,7 @@ export default function NewSessionScreen() {
     setUmaIndex(2);
     setOkaText('5000');
     setTopPrizeText('0');
+    setTobishoText('0');
     setSelectedTemplate(null);
     setShowPicker(false);
   }
@@ -124,6 +128,7 @@ export default function NewSessionScreen() {
         umaSmall: uma.small,
         oka,
         topPrize,
+        tobisho,
         startedAt: new Date().toISOString(),
       });
       router.replace(`/session/${sessionId}`);
@@ -294,6 +299,19 @@ export default function NewSessionScreen() {
             <Text style={styles.hintText}>
               ※ 1位がお店に支払う追加料金
             </Text>
+
+            <Text style={styles.label}>トビ賞（円）</Text>
+            <TextInput
+              style={styles.input}
+              keyboardType="number-pad"
+              placeholder="例: 1000（0=なし）"
+              placeholderTextColor={Colors.textLight}
+              value={tobishoText}
+              onChangeText={setTobishoText}
+            />
+            <Text style={styles.hintText}>
+              ※ 0点以下にした/された時のボーナス
+            </Text>
           </View>
 
           {/* === ウマオカ設定 === */}
@@ -377,6 +395,10 @@ export default function NewSessionScreen() {
               <Text style={styles.summaryValue}>{topPrize > 0 ? `¥${topPrize.toLocaleString()}` : 'なし'}</Text>
             </View>
             <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>トビ賞</Text>
+              <Text style={styles.summaryValue}>{tobisho > 0 ? `¥${tobisho.toLocaleString()}` : 'なし'}</Text>
+            </View>
+            <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>チップ単価</Text>
               <Text style={styles.summaryValue}>{chipPrice > 0 ? `¥${chipPrice}` : 'なし'}</Text>
             </View>
@@ -446,6 +468,7 @@ export default function NewSessionScreen() {
                       {getRateLabel(item.rate)} / ウマ{getUmaLabel(item.umaBig, item.umaSmall)}
                       {item.gameFee > 0 ? ` / 場代¥${item.gameFee}` : ''}
                       {item.topPrize > 0 ? ` / トップ賞¥${item.topPrize}` : ''}
+                      {(item.tobisho ?? 0) > 0 ? ` / トビ賞¥${item.tobisho}` : ''}
                     </Text>
                   </View>
                   {selectedTemplate?.name === item.name && (

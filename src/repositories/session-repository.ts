@@ -11,6 +11,7 @@ interface SessionRow {
   uma_small: number;
   oka: number;
   top_prize: number;
+  tobisho: number;
   started_at: string;
   note: string | null;
   created_at: string;
@@ -28,6 +29,7 @@ function mapRow(row: SessionRow): Session {
     umaSmall: row.uma_small,
     oka: row.oka,
     topPrize: row.top_prize,
+    tobisho: row.tobisho ?? 0,
     startedAt: row.started_at,
     note: row.note,
     createdAt: row.created_at,
@@ -65,13 +67,14 @@ export function useSessionRepository() {
     umaSmall: number;
     oka: number;
     topPrize: number;
+    tobisho?: number;
     startedAt: string;
     note?: string;
   }): Promise<number> {
     const now = new Date().toISOString();
     const result = await db.runAsync(
-      `INSERT INTO sessions (name, rate, game_fee, chip_price, uma_big, uma_small, oka, top_prize, started_at, note, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO sessions (name, rate, game_fee, chip_price, uma_big, uma_small, oka, top_prize, tobisho, started_at, note, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         data.name ?? null,
         data.rate,
@@ -81,6 +84,7 @@ export function useSessionRepository() {
         data.umaSmall,
         data.oka,
         data.topPrize,
+        data.tobisho ?? 0,
         data.startedAt,
         data.note ?? null,
         now,
@@ -102,6 +106,7 @@ export function useSessionRepository() {
       umaSmall: number;
       oka: number;
       topPrize: number;
+      tobisho?: number;
       note?: string;
     }
   ): Promise<void> {
@@ -110,7 +115,7 @@ export function useSessionRepository() {
       `UPDATE sessions SET
         name = ?, rate = ?, game_fee = ?, chip_price = ?,
         uma_big = ?, uma_small = ?, oka = ?, top_prize = ?,
-        note = ?, updated_at = ?
+        tobisho = ?, note = ?, updated_at = ?
        WHERE id = ?`,
       [
         data.name ?? null,
@@ -121,6 +126,7 @@ export function useSessionRepository() {
         data.umaSmall,
         data.oka,
         data.topPrize,
+        data.tobisho ?? 0,
         data.note ?? null,
         now,
         id,
