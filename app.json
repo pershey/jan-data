@@ -3,7 +3,7 @@
     "name": "jan-data",
     "slug": "jan-data",
     "scheme": "jan-data",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -42,7 +42,12 @@
           "iosAppId": "ca-app-pub-7844017135115297~8203010029"
         }
       ],
-      "expo-tracking-transparency"
+      [
+        "expo-tracking-transparency",
+        {
+          "userTrackingPermission": "パーソナライズされた広告を表示するために使用します。"
+        }
+      ]
     ],
     "extra": {
       "router": {},

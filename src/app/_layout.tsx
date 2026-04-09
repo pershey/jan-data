@@ -11,9 +11,10 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   useEffect(() => {
     const init = async () => {
-      // ATTダイアログ表示 + AdMob SDK初期化（ネイティブのみ）
-      await initializeAds();
+      // まずスプラッシュスクリーンを非表示にしてUIを描画する
       await SplashScreen.hideAsync();
+      // ATTダイアログ表示 + AdMob SDK初期化（内部で遅延後にATTダイアログを表示）
+      await initializeAds();
     };
     init();
   }, []);
